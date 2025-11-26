@@ -55,9 +55,6 @@ pip install -r requirements.txt
 
 3. Configure your API settings:
 ```bash
-# Copy the example configuration file
-cp .env.example .env
-
 # Edit the .env file with your preferred text editor
 # On Linux/Mac:
 nano .env
@@ -88,7 +85,7 @@ MAX_WORKERS=5                               # Number of concurrent workers
 ENABLE_CONCURRENT=True                      # Enable concurrent processing
 
 # File Paths
-INPUT_CSV=data/input/names.csv              # Input CSV file path
+INPUT_CSV=data/input/names_large.csv              # Input CSV file path
 OUTPUT_CSV=data/output/results.csv          # Output CSV file path
 NAME_COLUMN=name                            # Column name containing scholar names
 ```
@@ -146,7 +143,7 @@ Maria Garcia
 Thomas Müller
 ```
 
-Place it in `data/input/names.csv` (or path specified in `.env`)
+Place it in `data/input/names_large.csv` (or path specified in `.env`)
 
 ### 2. Run the Tool
 
@@ -188,10 +185,7 @@ Wei Zhang,Unknown,Low,CHN,High,No,
 This tool works with any OpenAI-compatible API endpoint:
 
 - **OpenAI**: `https://api.openai.com/v1`
-- **Azure OpenAI**: `https://your-resource.openai.azure.com/`
-- **DeepSeek**: `https://api.deepseek.com/v1`
-- **Zhipu AI**: `https://open.bigmodel.cn/api/paas/v4/`
-- **Alibaba Cloud**: Configure according to provider documentation
+- **DeepSeek**: `https://api.deepseek.com`
 - **Other providers**: Any service supporting OpenAI API format
 
 ## Error Handling
@@ -216,7 +210,7 @@ Common errors in `error_reason` column:
 namelyze/
 ├── README.md                 # This file
 ├── requirements.txt          # Python dependencies
-├── .env.example             # Configuration template
+├── .env                     # Configuration template
 ├── main.py                  # Main entry point
 ├── src/
 │   ├── __init__.py
