@@ -68,7 +68,10 @@ class LLMClient:
                 model=self.model_name,
                 messages=messages,
                 temperature=0.3,  # Lower temperature for more consistent outputs
+                response_format={
+        'type': 'json_object'}
             )
+            
             return response.choices[0].message.content
 
         except Exception as e:
