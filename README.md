@@ -10,10 +10,32 @@ A research tool that uses Large Language Models (LLMs) to infer nationality and 
 
 - **LLM-Powered Inference**: Leverages the knowledge and reasoning capabilities of commercial LLMs
 - **OpenAI Compatible**: Works with any OpenAI-compatible API (OpenAI, Azure OpenAI, DeepSeek, Zhipu, etc.)
+- **Concurrent Processing**: High-performance parallel batch processing for large datasets
 - **Batch Processing**: Efficient batch processing to reduce API costs
 - **Comprehensive Validation**: Built-in validation with error tracking and reporting
 - **Confidence Levels**: Provides High/Medium/Low confidence ratings for each inference
 - **ISO Standards**: Uses ISO 3166-1 alpha-3 country codes for nationalities
+
+## 💰 Cost Comparison
+
+Compared to traditional commercial gender/nationality APIs, Namelyze offers significantly lower costs when using affordable LLM providers like DeepSeek:
+
+| Service | Pricing Model | Cost per 1K names (USD) | Cost per 10K names (USD) | Cost per 1K names (CNY) | Cost per 10K names (CNY) |
+|---------|---------------|-------------------------|--------------------------|-------------------------|--------------------------|
+| **Genderize.io** | Tiered plans | $0.80 / $0.24 / $0.072 / $0.0216 | $8.0 / $2.4 / $0.72 / $0.216 | ¥5.7 / ¥1.7 / ¥0.51 / ¥0.15 | ¥57 / ¥17 / ¥5.1 / ¥1.5 |
+| **Namsor** | Credit-based (~1 credit/name) | ~$0.99 | ~$9.9 | ~¥7.0 | ~¥70.1 |
+| **GenderAPI.io** | Subscription plans | ~$0.60 | ~$6.0 | ~¥4.9 | ~¥49.1 |
+| **Namelyze + DeepSeek** 🚀 | Token-based (pay-as-you-go) | **~$0.02** | **~$0.2** | **~¥0.15** | **~¥1.5** |
+
+*Exchange rates: 1 USD ≈ 7.08 CNY, 1 EUR ≈ 8.19 CNY*
+
+**Real-World Example**: Processing 1,788 scholar names with DeepSeek-V3 (BATCH_SIZE=40, MAX_WORKERS=20) consumed 138K tokens and cost only **¥0.3 ($0.042)**. That's about **¥0.17 per 1,000 names** — up to **40x cheaper** than traditional APIs!
+
+**Why so affordable?**
+- Modern LLMs have dramatically reduced token costs
+- Batch processing minimizes overhead
+- No per-name fees, only pay for actual token usage
+- Concurrent processing maximizes efficiency
 
 ## Installation
 
