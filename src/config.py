@@ -25,7 +25,7 @@ class Settings(BaseSettings):
 
     # Processing Configuration
     batch_size: int = Field(
-        default=20,
+        default=50,
         ge=1,
         le=100,
         description="Number of names to process in each batch"

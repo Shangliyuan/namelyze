@@ -33,30 +33,139 @@ pip install -r requirements.txt
 
 3. 配置API设置：
 ```bash
+# 复制配置文件示例
 cp .env.example .env
-# 编辑 .env 文件，填入你的API凭证
+
+# 使用文本编辑器编辑 .env 文件
+# Linux/Mac用户:
+nano .env
+# 或
+vim .env
+
+# Windows用户:
+notepad .env
+# 或右键点击 .env 文件 → 使用记事本打开
 ```
 
 ## 配置
 
-编辑 `.env` 文件来配置工具：
+### 基础配置
+
+编辑 `.env` 文件来配置工具。以下是各参数的详细说明：
 
 ```bash
 # API配置
-OPENAI_API_BASE=https://api.openai.com/v1  # 修改为你的API端点
+OPENAI_API_BASE=https://api.openai.com/v1  # API端点URL
 OPENAI_API_KEY=sk-your-api-key-here        # 你的API密钥
-MODEL_NAME=gpt-4                            # 要使用的模型
+MODEL_NAME=gpt-4                            # 使用的模型名称
 
 # 处理设置
-BATCH_SIZE=20                               # 每批次处理的姓名数量
-MAX_RETRIES=3                               # API调用失败重试次数
-TIMEOUT=60                                  # API超时时间（秒）
+BATCH_SIZE=50                               # 每批次处理的姓名数量
+MAX_RETRIES=3                               # API调用失败最大重试次数
+TIMEOUT=60                                  # API请求超时时间（秒）
+MAX_WORKERS=5                               # 并发处理的worker数量
+ENABLE_CONCURRENT=True                      # 启用并发处理
 
 # 文件路径
-INPUT_CSV=data/input/names.csv              # 输入文件路径
-OUTPUT_CSV=data/output/results.csv          # 输出文件路径
-NAME_COLUMN=name                            # 包含姓名的列名
+INPUT_CSV=data/input/names.csv              # 输入CSV文件路径
+OUTPUT_CSV=data/output/results.csv          # 输出CSV文件路径
+NAME_COLUMN=name                            # 包含学者姓名的列名
 ```
+
+### 核心参数详解
+
+#### **BATCH_SIZE** (默认: 50)
+- **作用**：将多少个姓名组合在一起发送给API
+- **影响**：批次越大，API调用次数越少，但可能超出token限制
+- **推荐值**：
+  - 小模型（gpt-3.5）：20-30
+  - 大模型（gpt-4）：40-60
+  - 长上下文模型：50-100
+
+#### **MAX_WORKERS** (默认: 5)
+- **作用**：同时处理多少个批次（并发数）
+- **影响**：数值越大处理越快，但可能触发API速率限制
+- **推荐值**：
+  - **保守设置** (3个workers)：适合大多数API提供商
+  - **平衡设置** (5个workers)：速度与安全的平衡点
+  - **激进设置** (10-20个workers)：仅在提供商支持高并发时使用
+
+⚠️ **重要提示**：不同API提供商的速率限制差异很大：
+- **OpenAI官方**：建议3-5个workers
+- **Azure OpenAI**：查看你的部署的TPM/RPM限制
+- **DeepSeek**：支持高并发（10-20个workers）
+- **其他提供商**：从3个workers开始，逐步增加
+
+#### BATCH_SIZE 和 MAX_WORKERS 如何协同工作
+
+```
+示例：处理1000个姓名
+├─ BATCH_SIZE=50 → 创建20个批次 (1000 ÷ 50)
+└─ MAX_WORKERS=5 → 同时处理5个批次
+   └─ 总耗时 ≈ 串行处理时间 ÷ 5
+```
+
+**性能预估**：
+- 串行处理（1 worker）：约20次API调用依次执行
+- 并发处理（5 workers）：约4轮，每轮5个并行调用
+- 加速效果：约5倍提速
+
+### 🌟 推荐配置：使用 DeepSeek API
+
+**为什么推荐 DeepSeek？**
+- ✅ **高并发支持**：可以设置较高的 MAX_WORKERS（10-20）
+- ✅ **宽松的速率限制**：不容易触发限流
+- ✅ **极高性价比**：价格远低于OpenAI
+- ✅ **优秀的推理能力**：DeepSeek-V3 在姓名推断任务表现出色
+
+**DeepSeek 配置示例**：
+
+```bash
+# .env 文件配置
+OPENAI_API_BASE=https://api.deepseek.com
+OPENAI_API_KEY=your-deepseek-api-key
+MODEL_NAME=deepseek-chat
+
+# 高性能配置（充分利用DeepSeek的高并发能力）
+BATCH_SIZE=40
+MAX_WORKERS=20
+ENABLE_CONCURRENT=True
+```
+
+**如何获取 DeepSeek API Key？**
+
+1. 访问 [DeepSeek 开放平台](https://platform.deepseek.com/)
+2. 注册账号并登录
+3. 在控制台创建 API Key
+4. 将 API Key 填入 `.env` 文件
+
+详细文档：https://api-docs.deepseek.com/zh-cn/
+
+### 💰 实际成本参考
+
+**真实案例** (使用 DeepSeek-V3)：
+
+处理 **1788个学者姓名**，配置如下：
+- `BATCH_SIZE=40`
+- `MAX_WORKERS=20`
+- 模型：DeepSeek-V3
+
+**Token消耗**：
+- 总计：138,207 tokens
+  - 输入：29,632 tokens（命中缓存）
+  - 输入：15,660 tokens（未命中缓存）
+  - 输出：92,915 tokens
+
+**费用**：￥0.3 人民币
+
+**性价比分析**：
+- 平均每个姓名：￥0.00017
+- 处理1万个姓名：约 ￥1.7
+- 处理10万个姓名：约 ￥17
+
+**对比 OpenAI GPT-4**（粗略估算）：
+- 相同任务使用GPT-4：约$5-10美元
+- DeepSeek成本仅为GPT-4的 **1/100 左右**
 
 ## 使用方法
 

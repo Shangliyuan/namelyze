@@ -33,30 +33,81 @@ pip install -r requirements.txt
 
 3. Configure your API settings:
 ```bash
+# Copy the example configuration file
 cp .env.example .env
-# Edit .env with your API credentials
+
+# Edit the .env file with your preferred text editor
+# On Linux/Mac:
+nano .env
+# or
+vim .env
+
+# On Windows:
+notepad .env
 ```
 
 ## Configuration
 
-Edit the `.env` file to configure the tool:
+### Basic Configuration
+
+Edit the `.env` file to configure the tool. Here's what each parameter means:
 
 ```bash
 # API Configuration
-OPENAI_API_BASE=https://api.openai.com/v1  # Change to your API endpoint
+OPENAI_API_BASE=https://api.openai.com/v1  # API endpoint URL
 OPENAI_API_KEY=sk-your-api-key-here        # Your API key
-MODEL_NAME=gpt-4                            # Model to use
+MODEL_NAME=gpt-4                            # Model name to use
 
 # Processing Settings
-BATCH_SIZE=20                               # Names per batch (adjust based on model limits)
-MAX_RETRIES=3                               # Retry attempts for failed API calls
-TIMEOUT=60                                  # API timeout in seconds
+BATCH_SIZE=50                               # Number of names to process in each batch
+MAX_RETRIES=3                               # Maximum retry attempts for failed API calls
+TIMEOUT=60                                  # API request timeout in seconds
+MAX_WORKERS=5                               # Number of concurrent workers
+ENABLE_CONCURRENT=True                      # Enable concurrent processing
 
 # File Paths
-INPUT_CSV=data/input/names.csv              # Input file path
-OUTPUT_CSV=data/output/results.csv          # Output file path
-NAME_COLUMN=name                            # Column name containing names
+INPUT_CSV=data/input/names.csv              # Input CSV file path
+OUTPUT_CSV=data/output/results.csv          # Output CSV file path
+NAME_COLUMN=name                            # Column name containing scholar names
 ```
+
+### Understanding Key Parameters
+
+#### **BATCH_SIZE** (Default: 50)
+- **What it does**: Groups this many names together in a single API request
+- **Impact**: Larger batches reduce the total number of API calls but may hit token limits
+- **Recommendations**:
+  - Small models (gpt-3.5): 20-30
+  - Large models (gpt-4): 40-60
+  - Context-optimized models: 50-100
+
+#### **MAX_WORKERS** (Default: 5)
+- **What it does**: Number of batches processed simultaneously
+- **Impact**: Higher values = faster processing but may trigger rate limits
+- **Recommendations**:
+  - **Conservative** (3 workers): Safe for most providers
+  - **Balanced** (5 workers): Good balance of speed and safety
+  - **Aggressive** (10-20 workers): Only if provider allows high concurrency
+
+⚠️ **Important**: Different API providers have different rate limits:
+- **OpenAI Official**: 3-5 workers recommended
+- **Azure OpenAI**: Check your deployment's TPM/RPM limits
+- **DeepSeek**: Supports high concurrency (10-20 workers)
+- **Other providers**: Start with 3 workers and increase gradually
+
+#### How BATCH_SIZE and MAX_WORKERS Work Together
+
+```
+Example: Processing 1000 names
+├─ BATCH_SIZE=50 → Creates 20 batches (1000 ÷ 50)
+└─ MAX_WORKERS=5 → Processes 5 batches at once
+   └─ Total time ≈ Serial time ÷ 5
+```
+
+**Performance Estimation**:
+- Serial (1 worker): ~20 API calls sequentially
+- Concurrent (5 workers): ~4 rounds of 5 parallel calls
+- Speedup: ~5x faster
 
 ## Usage
 
