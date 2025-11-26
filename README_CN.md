@@ -278,11 +278,9 @@ namelyze/
 │   ├── prompt_template.py   # Prompt工程
 │   ├── validator.py         # 结果验证
 │   └── processor.py         # 核心处理逻辑
-├── data/
-│   ├── input/               # 输入CSV文件
-│   └── output/              # 输出结果
-└── examples/
-    └── sample_names.csv     # 示例输入
+└── data/
+    ├── input/               # 输入CSV文件
+    └── output/              # 输出结果
 ```
 
 ## 日志
