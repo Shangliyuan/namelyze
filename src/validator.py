@@ -4,6 +4,7 @@ Data validation module for inference results
 
 from typing import Dict, List, Set
 import logging
+import pycountry
 
 logger = logging.getLogger(__name__)
 
@@ -11,31 +12,24 @@ logger = logging.getLogger(__name__)
 VALID_GENDERS: Set[str] = {"Male", "Female", "Unknown"}
 VALID_CONFIDENCES: Set[str] = {"High", "Medium", "Low"}
 
-# ISO 3166-1 alpha-3 country codes (partial list - can be extended)
-# Including "Unknown" as valid value per prompt specification
-VALID_NATIONS: Set[str] = {
-    "Unknown",  # Explicitly allowed per prompt
-    "AFG", "ALB", "DZA", "AND", "AGO", "ATG", "ARG", "ARM", "AUS", "AUT",
-    "AZE", "BHS", "BHR", "BGD", "BRB", "BLR", "BEL", "BLZ", "BEN", "BTN",
-    "BOL", "BIH", "BWA", "BRA", "BRN", "BGR", "BFA", "BDI", "KHM", "CMR",
-    "CAN", "CPV", "CAF", "TCD", "CHL", "CHN", "COL", "COM", "COG", "COD",
-    "CRI", "CIV", "HRV", "CUB", "CYP", "CZE", "DNK", "DJI", "DMA", "DOM",
-    "ECU", "EGY", "SLV", "GNQ", "ERI", "EST", "ETH", "FJI", "FIN", "FRA",
-    "GAB", "GMB", "GEO", "DEU", "GHA", "GRC", "GRD", "GTM", "GIN", "GNB",
-    "GUY", "HTI", "HND", "HUN", "ISL", "IND", "IDN", "IRN", "IRQ", "IRL",
-    "ISR", "ITA", "JAM", "JPN", "JOR", "KAZ", "KEN", "KIR", "PRK", "KOR",
-    "KWT", "KGZ", "LAO", "LVA", "LBN", "LSO", "LBR", "LBY", "LIE", "LTU",
-    "LUX", "MKD", "MDG", "MWI", "MYS", "MDV", "MLI", "MLT", "MHL", "MRT",
-    "MUS", "MEX", "FSM", "MDA", "MCO", "MNG", "MNE", "MAR", "MOZ", "MMR",
-    "NAM", "NRU", "NPL", "NLD", "NZL", "NIC", "NER", "NGA", "NOR", "OMN",
-    "PAK", "PLW", "PAN", "PNG", "PRY", "PER", "PHL", "POL", "PRT", "QAT",
-    "ROU", "RUS", "RWA", "KNA", "LCA", "VCT", "WSM", "SMR", "STP", "SAU",
-    "SEN", "SRB", "SYC", "SLE", "SGP", "SVK", "SVN", "SLB", "SOM", "ZAF",
-    "SSD", "ESP", "LKA", "SDN", "SUR", "SWZ", "SWE", "CHE", "SYR", "TJK",
-    "TZA", "THA", "TLS", "TGO", "TON", "TTO", "TUN", "TUR", "TKM", "TUV",
-    "UGA", "UKR", "ARE", "GBR", "USA", "URY", "UZB", "VUT", "VAT", "VEN",
-    "VNM", "YEM", "ZMB", "ZWE"
-}
+
+def is_valid_nation_code(nation_code: str) -> bool:
+    """
+    Validate ISO 3166-1 alpha-3 country code using pycountry library
+
+    Args:
+        nation_code: 3-letter country code to validate
+
+    Returns:
+        True if valid ISO 3166-1 alpha-3 code or "Unknown", False otherwise
+    """
+    # "Unknown" is explicitly allowed per prompt specification
+    if nation_code == "Unknown":
+        return True
+
+    # Validate using pycountry library
+    country = pycountry.countries.get(alpha_3=nation_code)
+    return country is not None
 
 
 def validate_result(result: Dict) -> tuple[bool, List[str]]:
@@ -76,7 +70,7 @@ def validate_result(result: Dict) -> tuple[bool, List[str]]:
     if "gender" in result and result["gender"] not in VALID_GENDERS:
         errors.append(f"Invalid gender value: {result['gender']}")
 
-    if "nation" in result and result["nation"] not in VALID_NATIONS:
+    if "nation" in result and not is_valid_nation_code(result["nation"]):
         errors.append(f"Invalid nation code: {result['nation']}")
 
     if "conf_gender" in result and result["conf_gender"] not in VALID_CONFIDENCES:

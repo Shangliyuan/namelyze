@@ -5,3 +5,4 @@ pydantic>=2.0.0
 pydantic-settings>=2.0.0
 tqdm>=4.65.0
 tenacity>=8.2.0
+pycountry>=23.12.0
