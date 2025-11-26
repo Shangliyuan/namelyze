@@ -2,7 +2,7 @@
 
 **Scholar Nationality and Gender Inference Tool**
 
-English | [简体中文](README_CN.md) | [📓 Tutorial](tutorial.ipynb)
+English | [简体中文](README_CN.md) | [📓 Tutorial](tutorial_EN.ipynb) | [📓 使用教学](tutorial_CN.ipynb)
 
 A research tool that uses Large Language Models (LLMs) to infer nationality and gender from scholar names, based on historical context, cultural background, and naming conventions.
 
