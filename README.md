@@ -219,11 +219,9 @@ namelyze/
 │   ├── prompt_template.py   # Prompt engineering
 │   ├── validator.py         # Result validation
 │   └── processor.py         # Core processing logic
-├── data/
-│   ├── input/               # Input CSV files
-│   └── output/              # Output results
-└── examples/
-    └── sample_names.csv     # Example input
+└── data/
+    ├── input/               # Input CSV files
+    └── output/              # Output results
 ```
 
 ## Logging
