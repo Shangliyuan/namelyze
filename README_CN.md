@@ -2,7 +2,7 @@
 
 **学者国籍与性别推断工具**
 
-[English](README.md) | 简体中文
+[English](README.md) | 简体中文 | [📓 Tutorial](tutorial.ipynb)
 
 一个研究工具，利用大语言模型（LLM）基于历史背景、文化背景和命名习惯，从学者姓名推断其国籍和性别。
 
@@ -55,9 +55,6 @@ pip install -r requirements.txt
 
 3. 配置API设置：
 ```bash
-# 复制配置文件示例
-cp .env.example .env
-
 # 使用文本编辑器编辑 .env 文件
 # Linux/Mac用户:
 nano .env
@@ -89,7 +86,7 @@ MAX_WORKERS=5                               # 并发处理的worker数量
 ENABLE_CONCURRENT=True                      # 启用并发处理
 
 # 文件路径
-INPUT_CSV=data/input/names.csv              # 输入CSV文件路径
+INPUT_CSV=data/input/names_large.csv              # 输入CSV文件路径
 OUTPUT_CSV=data/output/results.csv          # 输出CSV文件路径
 NAME_COLUMN=name                            # 包含学者姓名的列名
 ```
@@ -204,7 +201,7 @@ Maria Garcia
 Thomas Müller
 ```
 
-将文件放在 `data/input/names.csv`（或在 `.env` 中指定的路径）
+将文件放在 `data/input/names_large.csv`（或在 `.env` 中指定的路径）
 
 ### 2. 运行工具
 
@@ -246,11 +243,7 @@ Wei Zhang,Unknown,Low,CHN,High,No,
 本工具支持任何OpenAI兼容的API端点：
 
 - **OpenAI官方**：`https://api.openai.com/v1`
-- **Azure OpenAI**：`https://your-resource.openai.azure.com/`
-- **DeepSeek**：`https://api.deepseek.com/v1`
-- **智谱AI**：`https://open.bigmodel.cn/api/paas/v4/`
-- **阿里云**：根据提供商文档配置
-- **其他提供商**：任何支持OpenAI API格式的服务
+- **DeepSeek**：`https://api.deepseek.com`
 
 ## 错误处理
 
@@ -276,7 +269,7 @@ namelyze/
 ├── README_CN.md             # 中文文档（本文件）
 ├── tutorial.ipynb           # Jupyter教程
 ├── requirements.txt          # Python依赖
-├── .env.example             # 配置模板
+├── .env                    # 配置模板
 ├── main.py                  # 主入口
 ├── src/
 │   ├── __init__.py
