@@ -2,7 +2,7 @@
 
 **学者国籍与性别推断工具**
 
-[English](README.md) | 简体中文 | [📓 Tutorial](tutorial.ipynb)
+[English](README.md) | 简体中文 | [📓 Tutorial](tutorial_EN.ipynb) | [📓 使用教学](tutorial_CN.ipynb)
 
 一个研究工具，利用大语言模型（LLM）基于历史背景、文化背景和命名习惯，从学者姓名推断其国籍和性别。
 
