@@ -42,6 +42,16 @@ class Settings(BaseSettings):
         le=300,
         description="API request timeout in seconds"
     )
+    max_workers: int = Field(
+        default=5,
+        ge=1,
+        le=20,
+        description="Maximum number of concurrent workers for batch processing"
+    )
+    enable_concurrent: bool = Field(
+        default=True,
+        description="Enable concurrent batch processing for better performance"
+    )
 
     # File Paths
     input_csv: str = Field(

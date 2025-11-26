@@ -4,10 +4,12 @@ Core processing logic for batch inference and CSV handling
 
 import json
 import pandas as pd
-from typing import List, Dict
+from typing import List, Dict, Tuple
 from pathlib import Path
 import logging
 from tqdm import tqdm
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import threading
 
 from .llm_client import LLMClient
 from .prompt_template import generate_prompt
@@ -22,7 +24,9 @@ class ScholarProcessor:
     def __init__(
         self,
         llm_client: LLMClient,
-        batch_size: int = 20
+        batch_size: int = 20,
+        max_workers: int = 5,
+        enable_concurrent: bool = True
     ):
         """
         Initialize processor
@@ -30,9 +34,14 @@ class ScholarProcessor:
         Args:
             llm_client: Configured LLM client
             batch_size: Number of names to process in each batch
+            max_workers: Maximum number of concurrent workers for batch processing
+            enable_concurrent: Enable concurrent batch processing
         """
         self.llm_client = llm_client
         self.batch_size = batch_size
+        self.max_workers = max_workers
+        self.enable_concurrent = enable_concurrent
+        self._lock = threading.Lock()  # For thread-safe logging
 
     def read_names_from_csv(self, file_path: str, name_column: str) -> List[str]:
         """
@@ -137,18 +146,33 @@ class ScholarProcessor:
                 for name in names
             ]
 
-    def process_all(self, names: List[str]) -> List[Dict]:
+    def process_batch_with_index(self, batch_data: Tuple[int, List[str]]) -> Tuple[int, List[Dict]]:
         """
-        Process all names in batches
+        Process a batch with index to maintain order in concurrent processing
+
+        Args:
+            batch_data: Tuple of (batch_index, names_list)
+
+        Returns:
+            Tuple of (batch_index, results_list)
+        """
+        batch_index, names = batch_data
+        with self._lock:
+            logger.debug(f"Processing batch {batch_index + 1} with {len(names)} names")
+
+        results = self.process_batch(names)
+        return batch_index, results
+
+    def process_all_concurrent(self, names: List[str]) -> List[Dict]:
+        """
+        Process all names in batches using concurrent workers
 
         Args:
             names: List of all names to process
 
         Returns:
-            List of all validated results
+            List of all validated results in original order
         """
-        all_results = []
-
         # Split into batches
         batches = [
             names[i:i + self.batch_size]
@@ -156,15 +180,86 @@ class ScholarProcessor:
         ]
 
         logger.info(f"Processing {len(names)} names in {len(batches)} batches")
+        logger.info(f"Using {self.max_workers} concurrent workers")
 
-        # Process each batch with progress bar
-        for batch in tqdm(batches, desc="Processing batches"):
-            batch_results = self.process_batch(batch)
-            all_results.extend(batch_results)
+        # Create indexed batches for maintaining order
+        indexed_batches = list(enumerate(batches))
+
+        # Dictionary to store results with their original index
+        results_dict = {}
+
+        # Process batches concurrently
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            # Submit all tasks
+            future_to_index = {
+                executor.submit(self.process_batch_with_index, batch_data): batch_data[0]
+                for batch_data in indexed_batches
+            }
+
+            # Process completed tasks with progress bar
+            with tqdm(total=len(batches), desc="Processing batches") as pbar:
+                for future in as_completed(future_to_index):
+                    try:
+                        batch_index, batch_results = future.result()
+                        results_dict[batch_index] = batch_results
+                        pbar.update(1)
+                    except Exception as e:
+                        batch_index = future_to_index[future]
+                        logger.error(f"Batch {batch_index + 1} failed: {str(e)}")
+                        # Store error results for failed batch
+                        failed_batch_names = batches[batch_index]
+                        results_dict[batch_index] = [
+                            add_validation_fields_for_error(
+                                name,
+                                f"Concurrent processing error: {str(e)}"
+                            )
+                            for name in failed_batch_names
+                        ]
+                        pbar.update(1)
+
+        # Reconstruct results in original order
+        all_results = []
+        for i in range(len(batches)):
+            if i in results_dict:
+                all_results.extend(results_dict[i])
 
         logger.info(f"Completed processing {len(all_results)} results")
 
         return all_results
+
+    def process_all(self, names: List[str]) -> List[Dict]:
+        """
+        Process all names in batches (concurrent or serial based on configuration)
+
+        Args:
+            names: List of all names to process
+
+        Returns:
+            List of all validated results
+        """
+        if self.enable_concurrent and len(names) > self.batch_size:
+            # Use concurrent processing for better performance
+            return self.process_all_concurrent(names)
+        else:
+            # Use serial processing for small datasets or when concurrent is disabled
+            all_results = []
+
+            # Split into batches
+            batches = [
+                names[i:i + self.batch_size]
+                for i in range(0, len(names), self.batch_size)
+            ]
+
+            logger.info(f"Processing {len(names)} names in {len(batches)} batches (serial mode)")
+
+            # Process each batch with progress bar
+            for batch in tqdm(batches, desc="Processing batches"):
+                batch_results = self.process_batch(batch)
+                all_results.extend(batch_results)
+
+            logger.info(f"Completed processing {len(all_results)} results")
+
+            return all_results
 
     def save_results_to_csv(self, results: List[Dict], output_path: str):
         """

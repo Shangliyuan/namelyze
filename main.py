@@ -63,8 +63,16 @@ def main():
         # Initialize processor
         processor = ScholarProcessor(
             llm_client=llm_client,
-            batch_size=settings.batch_size
+            batch_size=settings.batch_size,
+            max_workers=settings.max_workers,
+            enable_concurrent=settings.enable_concurrent
         )
+
+        # Log processing mode
+        if settings.enable_concurrent:
+            logger.info(f"Concurrent processing enabled with {settings.max_workers} workers")
+        else:
+            logger.info("Serial processing mode")
 
         # Run processing pipeline
         processor.run(
